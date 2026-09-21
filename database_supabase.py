@@ -387,6 +387,11 @@ SETTING_DEFAULTS = {
     "meowie_next_fish_ts": "0",
     "meowie_last_meow_msg_id": "",
     "meowie_last_fish_msg_id": "",
+    # ─── کریستال خودکار ───
+    "crystal_game_active": "0",
+    "crystal_game_chat_id": "",
+    "crystal_next_ts": "0",
+    "crystal_last_msg_id": "",
 }
 
 # کش تنظیمات (RAM — fallback سریع)

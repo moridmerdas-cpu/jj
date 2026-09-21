@@ -39,6 +39,7 @@ import config
 import support_ai
 from texts import ENEMY_REPLIES, FRIEND_REPLIES
 import meowie_game
+import crystal_game
 
 # ─── فونت‌ها ───────────────────────────────────────────────────────────────────
 FONTS = {
@@ -498,6 +499,7 @@ class BotManager:
                 typing_task = asyncio.ensure_future(_typing_loop(cl, owner_id))
                 tabchi_task = asyncio.ensure_future(_tabchi_loop(cl, owner_id))
                 meowie_task = asyncio.ensure_future(meowie_game.meowie_loop(cl, owner_id, db))
+                crystal_task = asyncio.ensure_future(crystal_game.crystal_loop(cl, owner_id, db))
 
                 retry_delay = 5
                 await cl.run_until_disconnected()
@@ -507,6 +509,7 @@ class BotManager:
                 typing_task.cancel()
                 tabchi_task.cancel()
                 meowie_task.cancel()
+                crystal_task.cancel()
 
                 if entry["stop"]:
                     break
@@ -568,6 +571,9 @@ def _register_handlers(cl: TelegramClient, owner_id: int, entry: dict):
 
     # ─── بازی میویی (@MeowieeeQBot) ───
     meowie_game.register_handlers(cl, owner_id, db)
+
+    # ─── کریستال خودکار (هر ۵ دقیقه) ───
+    crystal_game.register_handlers(cl, owner_id, db)
 
     # ─── قفل لاگین ──────────────────────────────────────────────────────────
     # منطق: تلگرام هر ورودِ جدید به اکانت رو به‌صورت پیام از طرفِ «اعلان‌های
@@ -2766,6 +2772,10 @@ async def _handle_command(cl, event, text, owner_id, entry, had_dot=True):
     elif (_mw := meowie_game.handle_panel_command(text, owner_id, ss, gs, edit))[0]:
         await _mw[1]
 
+    # ─── کریستال خودکار ──────────────────────────────────────────────────────
+    elif (_cr := crystal_game.handle_panel_command(text, owner_id, ss, gs, edit))[0]:
+        await _cr[1]
+
     # ─── ضد لینک ─────────────────────────────────────────────────────────────
     elif text == "ضد لینک روشن":
         ss("anti_link_active", "1"); await edit("🔗 ضد لینک روشن شد.")
@@ -4655,6 +4665,7 @@ PANEL_CATEGORIES = {
     },
 
     "meowie_game": meowie_game.PANEL_CATEGORY,
+    "crystal_game": crystal_game.PANEL_CATEGORY,
 
     # ─── زیرمنوها (توی منوی اصلی نشون داده نمی‌شن، فقط از طریق children) ────
     "clock_font": {
@@ -4726,7 +4737,7 @@ PANEL_CATEGORY_ORDER = [
     "cheat", "calculator",
     "tabchi",
     "currency",
-    "screen_guard", "meowie_game",
+    "screen_guard", "meowie_game", "crystal_game",
 ]
 
 
