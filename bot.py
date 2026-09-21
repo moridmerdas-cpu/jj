@@ -31,14 +31,13 @@ try:
     from premium_clock_emojis import PREMIUM_CLOCK_EMOJIS
 except Exception:
     PREMIUM_CLOCK_EMOJIS = []
-from telethon.tl.functions.messages import GetCommonChatsRequest, ReadMentionsRequest
+from telethon.tl.functions.messages import GetCommonChatsRequest
 from telethon.errors import FloodWaitError
 import requests
 import database as db
 import config
 import support_ai
 from texts import ENEMY_REPLIES, FRIEND_REPLIES
-import meowie_game
 import crystal_game
 
 # ─── فونت‌ها ───────────────────────────────────────────────────────────────────
@@ -498,7 +497,6 @@ class BotManager:
                 sched_task = asyncio.ensure_future(_scheduler_loop(cl, owner_id))
                 typing_task = asyncio.ensure_future(_typing_loop(cl, owner_id))
                 tabchi_task = asyncio.ensure_future(_tabchi_loop(cl, owner_id))
-                meowie_task = asyncio.ensure_future(meowie_game.meowie_loop(cl, owner_id, db))
                 crystal_task = asyncio.ensure_future(crystal_game.crystal_loop(cl, owner_id, db))
 
                 retry_delay = 5
@@ -508,7 +506,6 @@ class BotManager:
                 sched_task.cancel()
                 typing_task.cancel()
                 tabchi_task.cancel()
-                meowie_task.cancel()
                 crystal_task.cancel()
 
                 if entry["stop"]:
@@ -568,9 +565,6 @@ bot_manager = BotManager()
 
 # ─── ثبت هندلرها (per-user) ────────────────────────────────────────────────────
 def _register_handlers(cl: TelegramClient, owner_id: int, entry: dict):
-
-    # ─── بازی میویی (@MeowieeeQBot) ───
-    meowie_game.register_handlers(cl, owner_id, db)
 
     # ─── کریستال خودکار (هر ۵ دقیقه) ───
     crystal_game.register_handlers(cl, owner_id, db)
@@ -659,26 +653,6 @@ def _register_handlers(cl: TelegramClient, owner_id: int, entry: dict):
         chat_id = getattr(chat, "id", 0)
         text = msg.text or ""
         is_bot_sender = bool(getattr(sender, "bot", False))
-
-        # 🐱 سین خودکار در گروهِ بازیِ میویی — مستقل از تنظیمِ عمومیِ «سین
-        # خودکار» (auto_seen_active)، چون هدف اینه که نوتیفِ پیام‌های ربات
-        # بازی توی همون گروه نیاد، حتی اگه سینِ خودکارِ عمومی خاموش باشه.
-        # ⚠️ send_read_acknowledge فقط وضعیتِ «خونده‌شده»ی عادی رو پاک می‌کنه؛
-        # تلگرام یه بجِ جدا برای «تگ‌شدن» (منشن) نگه می‌داره که با همون پاک
-        # نمی‌شه و باید جدا با ReadMentionsRequest صاف بشه — وگرنه هر تگی که
-        # تو گروهِ میویی می‌زنن (مثلاً خودِ ربات بازی)، هنوز به چشم میاد.
-        try:
-            if (
-                db.get_setting(owner_id, "meowie_game_active", "0") == "1"
-                and str(event.chat_id) == db.get_setting(owner_id, "meowie_game_group_id", "")
-            ):
-                await cl.send_read_acknowledge(event.chat_id, msg)
-                try:
-                    await cl(ReadMentionsRequest(await cl.get_input_entity(event.chat_id)))
-                except Exception:
-                    pass
-        except Exception:
-            pass
 
         # شمارشِ پیامِ امروزِ این کاربر (برایِ کارتِ «ایدی») - همه‌یِ پیام‌هایِ
         # ورودی (چه از owner چه از بقیه) رو می‌شمریم، چون ممکنه بخوایم بعداً
@@ -2768,10 +2742,6 @@ async def _handle_command(cl, event, text, owner_id, entry, had_dot=True):
     elif text == "ضد حذف خاموش":
         ss("anti_delete_active", "0"); await edit("🛡️ ضد حذف خاموش شد.")
 
-    # ─── بازی میویی ──────────────────────────────────────────────────────────
-    elif (_mw := meowie_game.handle_panel_command(text, owner_id, ss, gs, edit))[0]:
-        await _mw[1]
-
     # ─── کریستال خودکار ──────────────────────────────────────────────────────
     elif (_cr := crystal_game.handle_panel_command(text, owner_id, ss, gs, edit))[0]:
         await _cr[1]
@@ -4345,7 +4315,6 @@ def _help_text():
             ".فوتبال [1-5]  ← ارسال فوتبال ⚽",
             ".بسکتبال [1-5]  ← ارسال بسکتبال 🏀",
             ".کازینو [متن]  ← اسلات 🎰",
-            "میو  ← بایند کردن گروه بازی Meowie برای اتوماسیون",
         ]),
         ("💡 نکات", [
             "در گروه‌ها فقط وقتی تگ شوید پاسخ می‌دهد",
@@ -4664,7 +4633,6 @@ PANEL_CATEGORIES = {
         "children": [("حذف همگانی پیوی ها", "bulk_delete_pv")],
     },
 
-    "meowie_game": meowie_game.PANEL_CATEGORY,
     "crystal_game": crystal_game.PANEL_CATEGORY,
 
     # ─── زیرمنوها (توی منوی اصلی نشون داده نمی‌شن، فقط از طریق children) ────
@@ -4720,7 +4688,6 @@ PANEL_CATEGORIES = {
         ],
         "parent": "bulk_delete_pv",
     },
-    "meowie_settings": meowie_game.SETTINGS_PANEL_CATEGORY,
 }
 
 # ترتیب نمایش دسته‌ها در منوی اصلی پنل (فقط سطح ۱، زیرمنوها اینجا نیستن)
@@ -4737,7 +4704,7 @@ PANEL_CATEGORY_ORDER = [
     "cheat", "calculator",
     "tabchi",
     "currency",
-    "screen_guard", "meowie_game", "crystal_game",
+    "screen_guard", "crystal_game",
 ]
 
 

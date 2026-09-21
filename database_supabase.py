@@ -380,13 +380,6 @@ SETTING_DEFAULTS = {
     "session_data": "",
     "logged_in": "0",
     "session_started_at": "",
-    # ─── بازی میویی (@MeowieeeQBot) ───
-    "meowie_game_active": "0",
-    "meowie_game_group_id": "",
-    "meowie_next_meow_ts": "0",
-    "meowie_next_fish_ts": "0",
-    "meowie_last_meow_msg_id": "",
-    "meowie_last_fish_msg_id": "",
     # ─── کریستال خودکار ───
     "crystal_game_active": "0",
     "crystal_game_chat_id": "",

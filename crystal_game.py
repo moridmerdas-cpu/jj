@@ -1,8 +1,7 @@
 # crystal_game.py
 # ─────────────────────────────────────────────────────────────────────────────
 # ارسال خودکار «کریستال» برای رباتِ بازی‌ای که هر ۵ دقیقه یک‌بار به‌ازای این
-# کلمه امتیاز می‌ده. ساختار دقیقاً مثل meowie_game.py هست و همون‌جوری قلاب
-# می‌شه:
+# کلمه امتیاز می‌ده. قلاب‌شدنش به bot.py به این شکله:
 #
 #   1) SETTING_DEFAULTS_EXTRA  → با SETTING_DEFAULTS توی database_supabase.py مرج بشه.
 #   2) register_handlers(cl, owner_id, db)  → توی _register_handlers() در bot.py.
@@ -71,7 +70,7 @@ PANEL_CATEGORY = {
 # ─── دیسپچر دستورهای متنی ───────────────────────────────────────────────────
 def handle_panel_command(text: str, owner_id: int, ss, gs, edit_coro_factory):
     """
-    مثل meowie_game.handle_panel_command: (handled, coroutine) برمی‌گردونه.
+    (handled, coroutine) برمی‌گردونه؛ کالر اگه handled بود coroutine رو await می‌کنه.
     """
     if text == "کریستال خودکار روشن":
         ss("crystal_game_active", "1")
